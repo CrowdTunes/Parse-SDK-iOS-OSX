@@ -242,7 +242,7 @@
                 }
             }
             [self.tasks removeAllObjects];
-            return [BFTask taskWithResult:nil];
+            return nil;
         }
     }];
 }
