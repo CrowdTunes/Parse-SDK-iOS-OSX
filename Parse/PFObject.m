@@ -1284,14 +1284,37 @@ static void PFObjectAssertValueIsKindOfValidClass(id object) {
     }
 }
 
+static NSString* ISO8601Format = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+// http://stackoverflow.com/questions/17558859/convert-iso-8601-to-nsdate
+static NSDate* NSDateFromISO8601String(NSString* dateString) {
+    
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:ISO8601Format];
+    // Always use this locale when parsing fixed format date strings
+    NSLocale *posix = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+    [formatter setLocale:posix];
+    [formatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+    NSDate *date = [formatter dateFromString:dateString];
+    
+    return date;
+}
+
 - (void)_mergeFromServerWithResult:(NSDictionary *)result decoder:(PFDecoder *)decoder completeData:(BOOL)completeData {
     @synchronized (lock) {
         PFMutableObjectState *state = [self._state mutableCopy];
 
         // If the server's data is complete, consider this object to be fetched.
         state.complete |= completeData;
-
+        
         [result enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+            // it appears that some legacy versions of Parse passed the Date as a dictionary... handle that
+            if ([obj isKindOfClass:[NSDictionary class]]) {
+                if (([[obj valueForKey:@"__type"] isEqualToString:@"Date"]) &&
+                    ([obj valueForKey:@"iso"])) {
+                    obj = NSDateFromISO8601String([obj valueForKey:@"iso"]);
+                }
+            }
+            
             if ([key isEqualToString:PFObjectObjectIdRESTKey]) {
                 state.objectId = obj;
             } else if ([key isEqualToString:PFObjectCreatedAtRESTKey]) {
