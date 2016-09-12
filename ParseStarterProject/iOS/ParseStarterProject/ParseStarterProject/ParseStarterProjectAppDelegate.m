@@ -15,9 +15,6 @@
 // If you are using Facebook, uncomment this line
 // #import <ParseFacebookUtils/PFFacebookUtils.h>
 
-// If you want to use Crash Reporting - uncomment this line
-// #import <ParseCrashReporting/ParseCrashReporting.h>
-
 #import "ParseStarterProjectAppDelegate.h"
 #import "ParseStarterProjectViewController.h"
 
@@ -27,17 +24,26 @@
 #pragma mark UIApplicationDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // Enable storing and querying data from Local Datastore. Remove this line if you don't want to
-    // use Local Datastore features or want to use cachePolicy.
-    [Parse enableLocalDatastore];
+    // ****************************************************************************
+    // Initialize Parse SDK
+    // ****************************************************************************
+
+    [Parse initializeWithConfiguration:[ParseClientConfiguration configurationWithBlock:^(id<ParseMutableClientConfiguration>  _Nonnull configuration) {
+        // Add your Parse applicationId:
+        configuration.applicationId = @"your_application_id";
+
+        // Uncomment and add your clientKey (it's not required if you are using Parse Server):
+        // configuration.clientKey = @"your_client_key";
+
+        // Uncomment the following line and change to your Parse Server address;
+        // configuration.server = @"https://YOUR_PARSE_SERVER/parse";
+
+        // Enable storing and querying data from Local Datastore. Remove this line if you don't want to
+        // use Local Datastore features or want to use cachePolicy.
+        configuration.localDatastoreEnabled = YES;
+    }]];
 
     // ****************************************************************************
-    // Uncomment this line if you want to enable Crash Reporting
-    // [ParseCrashReporting enable];
-    //
-    // Uncomment and fill in with your Parse credentials:
-    // [Parse setApplicationId:@"your_application_id" clientKey:@"your_client_key"];
-    //
     // If you are using Facebook, uncomment and add your FacebookAppID to your bundle's plist as
     // described here: https://developers.facebook.com/docs/getting-started/facebook-sdk-for-ios/
     // [PFFacebookUtils initializeFacebook];
@@ -48,7 +54,7 @@
     PFACL *defaultACL = [PFACL ACL];
 
     // If you would like all objects to be private by default, remove this line.
-    [defaultACL setPublicReadAccess:YES];
+    defaultACL.publicReadAccess = YES;
 
     [PFACL setDefaultACL:defaultACL withAccessForCurrentUser:YES];
 
@@ -61,15 +67,13 @@
         // Track an app open here if we launch with a push, unless
         // "content_available" was used to trigger a background push (introduced in iOS 7).
         // In that case, we skip tracking here to avoid double counting the app-open.
-        BOOL preBackgroundPush = ![application respondsToSelector:@selector(backgroundRefreshStatus)];
         BOOL oldPushHandlerOnly = ![self respondsToSelector:@selector(application:didReceiveRemoteNotification:fetchCompletionHandler:)];
         BOOL noPushPayload = !launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey];
-        if (preBackgroundPush || oldPushHandlerOnly || noPushPayload) {
+        if (oldPushHandlerOnly || noPushPayload) {
             [PFAnalytics trackAppOpenedWithLaunchOptions:launchOptions];
         }
     }
 
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     if ([application respondsToSelector:@selector(registerUserNotificationSettings:)]) {
         UIUserNotificationType userNotificationTypes = (UIUserNotificationTypeAlert |
                                                         UIUserNotificationTypeBadge |
@@ -78,9 +82,7 @@
                                                                                  categories:nil];
         [application registerUserNotificationSettings:settings];
         [application registerForRemoteNotifications];
-    } else
-#endif
-    {
+    } else {
         [application registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge |
                                                          UIRemoteNotificationTypeAlert |
                                                          UIRemoteNotificationTypeSound)];

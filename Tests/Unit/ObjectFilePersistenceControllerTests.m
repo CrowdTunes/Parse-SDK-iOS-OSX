@@ -12,10 +12,10 @@
 #import "BFTask+Private.h"
 #import "PFObject.h"
 #import "PFObjectFilePersistenceController.h"
-#import "PFUnitTestCase.h"
+#import "PFTestCase.h"
 #import "PFPersistenceController.h"
 
-@interface ObjectFilePersistenceControllerTests : PFUnitTestCase
+@interface ObjectFilePersistenceControllerTests : PFTestCase
 
 @end
 
@@ -57,8 +57,6 @@
     controller = [PFObjectFilePersistenceController controllerWithDataSource:dataSource];
     XCTAssertNotNil(controller);
     XCTAssertEqual((id)controller.dataSource, dataSource);
-
-    PFAssertThrowsInconsistencyException([PFObjectFilePersistenceController new]);
 }
 
 - (void)testLoadPersistentObject {

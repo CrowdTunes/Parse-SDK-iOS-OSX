@@ -16,11 +16,11 @@
 #import "PFUnitTestCase.h"
 #import "PFUserPrivate.h"
 
-@interface ACLUnitTests : PFUnitTestCase
+@interface ACLTests : PFUnitTestCase
 
 @end
 
-@implementation ACLUnitTests
+@implementation ACLTests
 
 - (void)testConstructors {
     id mockedUser = PFStrictClassMock([PFUser class]);
@@ -122,7 +122,7 @@
     OCMStub(lazyUser.objectId).andDo(^(NSInvocation *invocation) {
         [invocation setReturnValue:&userId];
     });
-    OCMStub(lazyUser.isLazy).andReturn(YES);
+    OCMStub(lazyUser._lazy).andReturn(YES);
 
     __block void (^saveListener)(id, NSError *) = nil;
 
@@ -207,19 +207,9 @@
     XCTAssertTrue([unsharedACL getPublicReadAccess]);
 }
 
-- (void)testDefaultACL {
-    PFACL *newACL = [PFACL ACL];
-    [newACL setPublicReadAccess:YES];
-    [newACL setShared:YES];
 
-    XCTAssertNotEqualObjects(newACL, [PFACL defaultACL]);
-    [PFACL setDefaultACL:newACL withAccessForCurrentUser:YES];
-    XCTAssertEqualObjects(newACL, [PFACL defaultACL]);
-}
 
 - (void)testACLRequiresObjectId {
-    [PFUser registerSubclass];
-
     PFACL *acl = [PFACL ACL];
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wnonnull"

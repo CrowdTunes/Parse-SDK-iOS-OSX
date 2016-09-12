@@ -189,20 +189,6 @@ static NSData *dataFromInputStream(NSInputStream *inputStream) {
     XCTAssertTrue(file.dataAvailable);
 }
 
-- (void)testConstructorWithTooLargeData {
-    NSMutableData *data = [NSMutableData dataWithLength:(10 * 1048576 + 1)];
-
-    NSError *error = nil;
-    PFFile *file = [PFFile fileWithName:@"testFile"
-                                   data:data
-                            contentType:nil
-                                  error:&error];
-
-    XCTAssertNil(file);
-    XCTAssertEqualObjects(NSCocoaErrorDomain, error.domain);
-    XCTAssertEqual(NSFileReadTooLargeError, error.code);
-}
-
 - (void)testConstructorWithNilData {
     NSMutableData *data = nil;
 
@@ -286,7 +272,11 @@ static NSData *dataFromInputStream(NSInputStream *inputStream) {
     OCMStub([verifier verifyObject:@YES error:nil]).andDo(^(NSInvocation *invocation) {
         [expectation fulfill];
     });
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [file saveInBackgroundWithTarget:verifier selector:@selector(verifyObject:error:)];
+#pragma clang diagnostic pop
 
     [self waitForTestExpectations];
 }
@@ -417,7 +407,11 @@ static NSData *dataFromInputStream(NSInputStream *inputStream) {
     OCMStub([verifier verifyObject:expectedData error:nil]).andDo(^(NSInvocation *invocation) {
         [expectation fulfill];
     });
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [file getDataInBackgroundWithTarget:verifier selector:@selector(verifyObject:error:)];
+#pragma clang diagnostic pop
 
     wait_next;
     expectation = [self expectationForSelector:@selector(getDataDownloadStreamInBackground)];
@@ -512,6 +506,42 @@ static NSData *dataFromInputStream(NSInputStream *inputStream) {
 
     [file cancel];
     [self waitForTestExpectations];
+}
+
+- (void)testClearCachedData {
+    id mockedFileController = [Parse _currentManager].coreManager.fileController;
+
+    PFFile *file = [PFFile fileWithName:@"a" data:[NSData data]];
+    OCMExpect([mockedFileController clearFileCacheAsyncForFileWithState:file.state]).andReturn([BFTask taskWithResult:nil]);
+
+    XCTestExpectation *expectation = [self currentSelectorTestExpectation];
+    [[file clearCachedDataInBackground] continueWithBlock:^id _Nullable(BFTask * _Nonnull task) {
+        XCTAssertNil(task.result);
+        XCTAssertFalse(task.faulted);
+        XCTAssertFalse(task.cancelled);
+        [expectation fulfill];
+        return nil;
+    }];
+    [self waitForTestExpectations];
+
+    OCMVerifyAll(mockedFileController);
+}
+
+- (void)testClearAllCachedData {
+    id mockedFileController = [Parse _currentManager].coreManager.fileController;
+    OCMExpect([mockedFileController clearAllFileCacheAsync]).andReturn([BFTask taskWithResult:nil]);
+
+    XCTestExpectation *expectation = [self currentSelectorTestExpectation];
+    [[PFFile clearAllCachedDataInBackground] continueWithBlock:^id _Nullable(BFTask * _Nonnull task) {
+        XCTAssertNil(task.result);
+        XCTAssertFalse(task.faulted);
+        XCTAssertFalse(task.cancelled);
+        [expectation fulfill];
+        return nil;
+    }];
+    [self waitForTestExpectations];
+
+    OCMVerifyAll(mockedFileController);
 }
 
 @end
