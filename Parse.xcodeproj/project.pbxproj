@@ -8709,8 +8709,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 81C582E01C3B0A40000063C6 /* Parse-watchOS-Dynamic.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
-				VALID_ARCHS = "arm64 armv7";
 			};
 			name = Debug;
 		};
@@ -8718,8 +8716,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 81C582E01C3B0A40000063C6 /* Parse-watchOS-Dynamic.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
-				VALID_ARCHS = "arm64 armv7";
 			};
 			name = Release;
 		};
